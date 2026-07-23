@@ -30,6 +30,8 @@ import CustomerProfile from "./pages/customer/Profile";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Layout from "./components/layout/Layout";
+import Favorites from "./pages/customer/Favorites";
+import Reviews from "./pages/customer/Reviews";
 
 function App() {
   const location = useLocation();
@@ -119,6 +121,15 @@ function App() {
         <Route path="/rider/profile" element={<RiderProfile />} />
         <Route path="/customer/profile" element={<CustomerProfile />} />
         <Route path="/owner/profile" element={<OwnerProfile />} />
+        <Route path="favorites" element={<Favorites />} />
+        <Route
+          path="/customer/reviews"
+          element={
+            <ProtectedRoute role="customer">
+              <Reviews />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

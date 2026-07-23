@@ -11,14 +11,9 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { api } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import customerMenu from "../../config/customerMenu";
 
-const menu = [
-  { name: "Dashboard", path: "/customer/dashboard" },
-  { name: "My Orders", path: "/orders" },
-  { name: "Favorites", path: "/favorites" },
-  { name: "Profile", path: "customer/profile" },
-  {}
-];
+const menu = customerMenu;
 
 const CustomerDashboard = () => {
   const { currentUser } = useAuth();
