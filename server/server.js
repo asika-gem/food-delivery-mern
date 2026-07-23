@@ -10,6 +10,7 @@ import restaurantRoutes from "./routes/restaurantRoutes.js";
 import menuRoutes from "./routes/menuRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import riderRoutes from "./routes/riderRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/rider", riderRoutes);
+app.use("/api/reviews", reviewRoutes);
 const PORT = process.env.PORT ;
 
 app.listen(PORT, () => {
