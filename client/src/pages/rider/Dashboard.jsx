@@ -1,5 +1,4 @@
        import { useEffect, useState } from "react";
-       import DashboardLayout from "../../components/dashboard/DashboardLayout";
        import { api } from "../../services/api";
 
        import {
@@ -96,11 +95,11 @@
 
          if (loading) {
            return (
-             <DashboardLayout title="Rider Dashboard" menu={menu}>
+             
                <div className="h-96 flex items-center justify-center text-slate-500">
                  Loading...
                </div>
-             </DashboardLayout>
+            
            );
          }
 
@@ -113,7 +112,7 @@
          );
 
          return (
-           <DashboardLayout title="Rider Dashboard" menu={menu}>
+           
              <div className="bg-slate-50 min-h-screen p-2">
                {/* Header */}
                <div className="bg-white rounded-3xl p-6 shadow-sm mb-6">
@@ -339,7 +338,6 @@
                  )}
                </div>
              </div>
-           </DashboardLayout>
          );
        };
 

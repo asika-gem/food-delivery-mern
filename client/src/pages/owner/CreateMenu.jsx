@@ -4,11 +4,6 @@ import { Upload, ArrowLeft } from "lucide-react";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { api } from "../../services/api";
 
-const menu = [
-  { name: "Dashboard", path: "/owner/dashboard" },
-  { name: "Restaurant", path: "/owner/restaurant" },
-  { name: "Menu", path: "/owner/menu" },
-];
 
 const CreateMenu = () => {
   const navigate = useNavigate();
@@ -101,7 +96,7 @@ const CreateMenu = () => {
   };
 
   return (
-    <DashboardLayout title="Create Menu" menu={menu}>
+    
       <div className="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow">
         <button
           onClick={() => navigate("/owner/menu")}
@@ -212,7 +207,6 @@ const CreateMenu = () => {
           </button>
         </form>
       </div>
-    </DashboardLayout>
   );
 };
 

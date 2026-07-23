@@ -18,7 +18,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/customer/Checkout";
 import OrderSuccess from "./pages/customer/OrderSucess";
 
-import OwnerDashboard from "./pages/owner/Dashboard";
+import Dashboard from "./pages/owner/Dashboard";
 import Restaurant from "./pages/owner/Resturant";
 import CreateRestaurant from "./pages/owner/CreateRestaurant";
 import EditRestaurant from "./pages/owner/EditRestaurant";
@@ -39,6 +39,11 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 
 import Layout from "./components/layout/Layout";
+import LiveTracking from "./pages/customer/LiveTracking";
+import DashboardLayout from "./components/dashboard/DashboardLayout";
+import { riderMenu } from "./constants/RiderMenu";
+import { ownerMenu } from "./constants/OwnerMenu";
+import Deliveries from "./pages/rider/Deliveries";
 
 function App() {
   return (
@@ -91,118 +96,62 @@ function App() {
       <Route path="/checkout" element={<Checkout />} />
 
       <Route path="/order-success" element={<OrderSuccess />} />
+      <Route
+        path="/customer/tracking/:orderId"
+        element={
+          <ProtectedRoute role="customer">
+            <LiveTracking />
+          </ProtectedRoute>
+        }
+      />
 
       {/* ================= OWNER ================= */}
-
       <Route
-        path="/owner/dashboard"
+        path="/owner"
         element={
           <ProtectedRoute role="owner">
-            <OwnerDashboard />
+            <DashboardLayout title="Owner Dashboard" menu={ownerMenu} />
           </ProtectedRoute>
         }
-      />
+      >
+        {/* Dashboard */}
+        <Route path="dashboard" element={<Dashboard />} />
 
-      <Route
-        path="/owner/restaurant"
-        element={
-          <ProtectedRoute role="owner">
-            <Restaurant />
-          </ProtectedRoute>
-        }
-      />
+        {/* Restaurant */}
+        <Route path="restaurant" element={<Restaurant />} />
 
-      <Route
-        path="/owner/create-restaurant"
-        element={
-          <ProtectedRoute role="owner">
-            <CreateRestaurant />
-          </ProtectedRoute>
-        }
-      />
+        <Route path="create-restaurant" element={<CreateRestaurant />} />
 
-      <Route
-        path="/owner/restaurant/edit/:id"
-        element={
-          <ProtectedRoute role="owner">
-            <EditRestaurant />
-          </ProtectedRoute>
-        }
-      />
+        <Route path="restaurant/edit/:id" element={<EditRestaurant />} />
 
-      <Route
-        path="/owner/menu"
-        element={
-          <ProtectedRoute role="owner">
-            <Menu />
-          </ProtectedRoute>
-        }
-      />
+        {/* Menu */}
+        <Route path="menu" element={<Menu />} />
 
-      <Route
-        path="/owner/menu/create"
-        element={
-          <ProtectedRoute role="owner">
-            <CreateMenu />
-          </ProtectedRoute>
-        }
-      />
+        <Route path="menu/create" element={<CreateMenu />} />
 
-      <Route
-        path="/owner/menu/edit/:id"
-        element={
-          <ProtectedRoute role="owner">
-            <EditMenu />
-          </ProtectedRoute>
-        }
-      />
+        <Route path="menu/edit/:id" element={<EditMenu />} />
 
-      <Route
-        path="/owner/orders"
-        element={
-          <ProtectedRoute role="owner">
-            <OwnerOrders />
-          </ProtectedRoute>
-        }
-      />
+        {/* Orders */}
+        <Route path="orders" element={<OwnerOrders />} />
 
-      <Route
-        path="/owner/profile"
-        element={
-          <ProtectedRoute role="owner">
-            <OwnerProfile />
-          </ProtectedRoute>
-        }
-      />
+        {/* Profile */}
+        <Route path="profile" element={<OwnerProfile />} />
+      </Route>
 
       {/* ================= RIDER ================= */}
-
       <Route
-        path="/rider/dashboard"
+        path="/rider"
         element={
           <ProtectedRoute role="rider">
-            <RiderDashboard />
+            <DashboardLayout title="Rider Dashboard" menu={riderMenu} />
           </ProtectedRoute>
         }
-      />
-
-      <Route
-        path="/rider/orders"
-        element={
-          <ProtectedRoute role="rider">
-            <RiderOrders />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/rider/profile"
-        element={
-          <ProtectedRoute role="rider">
-            <RiderProfile />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="dashboard" element={<RiderDashboard />} />
+        <Route path="orders" element={<RiderOrders />} />
+        <Route path="profile" element={<RiderProfile />} />
+        <Route path="delivery" element={<Deliveries />} />
+      </Route>
     </Routes>
   );
 }

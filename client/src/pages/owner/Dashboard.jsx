@@ -1,18 +1,14 @@
 import { useEffect, useState } from "react";
-import { Store, UtensilsCrossed, ShoppingBag, DollarSign } from "lucide-react";
+import {
+  Store,
+  UtensilsCrossed,
+  ShoppingBag,
+  DollarSign,
+  Package,
+  Building2,
+} from "lucide-react";
 
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { api } from "../../services/api";
-
-
-const menu = [
-  { name: "Dashboard", path: "/owner/dashboard" },
-  { name: "Restaurant", path: "/owner/restaurant" },
-  { name: "Menu", path: "/owner/menu" },
-  { name: "Orders", path: "/owner/orders" },
-  {name: "Profile", path: "/owner/profile" }
-];
-
 
 const Dashboard = () => {
   const [restaurant, setRestaurant] = useState(null);
@@ -36,26 +32,25 @@ const Dashboard = () => {
       const menuRes = await api.get("/menu/my");
       const orderRes = await api.get("/orders/owner");
 
+      const restaurantData = restaurantRes.data.restaurant;
+      const menusData = menuRes.data.menus || [];
+      const ordersData = orderRes.data.orders || [];
 
-      const restaurant = restaurantRes.data.restaurant;
-      const menus = menuRes.data.menus || [];
-      const orders = orderRes.data.orders || [];
+      setRestaurant(restaurantData);
+      setMenus(menusData);
+      setOrders(ordersData);
 
-      setRestaurant(restaurant);
-      setMenus(menus);
-      setOrders(orders);
+      const revenue = ordersData
+        .filter((order) => order.status === "delivered")
+        .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
-      const revenue = orders
-        .filter((o) => o.status === "delivered")
-        .reduce((sum, o) => sum + o.totalAmount, 0);
-
-      const activeOrders = orders.filter((o) =>
-        ["pending", "confirmed", "preparing"].includes(o.status),
+      const activeOrders = ordersData.filter((order) =>
+        ["pending", "confirmed", "preparing"].includes(order.status),
       ).length;
 
       setStats({
-        restaurants: restaurant ? 1 : 0,
-        foods: menus.length,
+        restaurants: restaurantData ? 1 : 0,
+        foods: menusData.length,
         orders: activeOrders,
         revenue,
       });
@@ -67,7 +62,6 @@ const Dashboard = () => {
   const updateStatus = async (id, status) => {
     try {
       await api.put(`/orders/${id}/status`, { status });
-
       fetchData();
     } catch (err) {
       console.log(err);
@@ -75,7 +69,8 @@ const Dashboard = () => {
   };
 
   return (
-    <DashboardLayout title="Restaurant Owner" menu={menu}>
+    <div className="min-h-screen bg-slate-50 p-2">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-slate-900">
           Owner Dashboard 👋
@@ -86,9 +81,9 @@ const Dashboard = () => {
         </p>
       </div>
 
-      {/* Stats Cards */}
-
+      {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {/* Restaurant */}
         <div className="rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
           <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100">
             <Store className="text-orange-600" size={25} />
@@ -101,6 +96,7 @@ const Dashboard = () => {
           <p className="mt-2 text-slate-500">Restaurant</p>
         </div>
 
+        {/* Menu */}
         <div className="rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
           <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100">
             <UtensilsCrossed className="text-orange-600" size={25} />
@@ -111,6 +107,7 @@ const Dashboard = () => {
           <p className="mt-2 text-slate-500">Menu Items</p>
         </div>
 
+        {/* Active Orders */}
         <div className="rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
           <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100">
             <ShoppingBag className="text-orange-600" size={25} />
@@ -121,6 +118,7 @@ const Dashboard = () => {
           <p className="mt-2 text-slate-500">Active Orders</p>
         </div>
 
+        {/* Revenue */}
         <div className="rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
           <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100">
             <DollarSign className="text-orange-600" size={25} />
@@ -133,8 +131,8 @@ const Dashboard = () => {
           <p className="mt-2 text-slate-500">Revenue</p>
         </div>
       </div>
-      {/* Today's Orders */}
 
+      {/* Today's Orders */}
       <div className="mt-10 rounded-3xl bg-white p-6 shadow-sm">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -174,23 +172,16 @@ const Dashboard = () => {
               >
                 <div className="flex flex-col gap-6 lg:flex-row lg:justify-between">
                   {/* Customer Details */}
-
                   <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-900">
-                          {order.customer?.name}
-                        </h3>
+                    <h3 className="text-xl font-bold text-slate-900">
+                      {order.customer?.name}
+                    </h3>
 
-                        <p className="mt-1 text-sm text-slate-500">
-                          {order.customer?.phone}
-                        </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {order.customer?.phone}
+                    </p>
 
-                        <p className="text-sm text-slate-500">
-                          {order.address}
-                        </p>
-                      </div>
-                    </div>
+                    <p className="text-sm text-slate-500">{order.address}</p>
 
                     <div className="mt-5 space-y-3">
                       {order.items.map((item, index) => (
@@ -211,7 +202,6 @@ const Dashboard = () => {
                   </div>
 
                   {/* Order Action */}
-
                   <div className="w-full lg:w-72">
                     <div className="rounded-3xl bg-white p-5 shadow-sm">
                       <p className="text-sm text-slate-500">Total Amount</p>
@@ -287,11 +277,10 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-      {/* Bottom Section */}
 
+      {/* Bottom Section */}
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
         {/* Restaurant Information */}
-
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-slate-900">
@@ -350,7 +339,6 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Menu */}
-
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-slate-900">Recent Menu</h2>
@@ -391,10 +379,8 @@ const Dashboard = () => {
       </div>
 
       {/* Analytics */}
-
       <div className="mt-10 grid gap-6 xl:grid-cols-3">
         {/* Revenue */}
-
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -408,19 +394,18 @@ const Dashboard = () => {
             </div>
 
             <div className="rounded-2xl bg-orange-100 p-4 text-orange-600">
-              💰
+              <DollarSign size={25} />
             </div>
           </div>
         </div>
 
         {/* Orders */}
-
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-500">Orders</p>
 
             <div className="rounded-2xl bg-orange-100 p-4 text-orange-600">
-              📦
+              <Package size={25} />
             </div>
           </div>
 
@@ -456,13 +441,12 @@ const Dashboard = () => {
         </div>
 
         {/* Performance */}
-
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-500">Restaurant Performance</p>
 
             <div className="rounded-2xl bg-orange-100 p-4 text-orange-600">
-              🏪
+              <Building2 size={25} />
             </div>
           </div>
 
@@ -505,7 +489,6 @@ const Dashboard = () => {
       </div>
 
       {/* Footer */}
-
       <div className="mt-10 rounded-3xl bg-orange-50 p-8 text-center">
         <h2 className="text-2xl font-bold text-slate-900">
           Grow Your Restaurant 🚀
@@ -516,7 +499,7 @@ const Dashboard = () => {
           experience.
         </p>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 

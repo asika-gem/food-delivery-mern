@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload } from "lucide-react";
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { api } from "../../services/api";
 
-const menu = [
-  { name: "Dashboard", path: "/owner/dashboard" },
-  { name: "Restaurant", path: "/owner/restaurant" },
-  { name: "Menu", path: "/owner/menu" },
-];
+
 
 const EditMenu = () => {
   const { id } = useParams();
@@ -114,14 +109,14 @@ const EditMenu = () => {
 
   if (loading) {
     return (
-      <DashboardLayout title="Edit Menu" menu={menu}>
+      
         <div className="py-10 text-center">Loading...</div>
-      </DashboardLayout>
+      
     );
   }
 
   return (
-    <DashboardLayout title="Edit Menu" menu={menu}>
+   
       <div className="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow">
         <button
           onClick={() => navigate("/owner/menu")}
@@ -240,7 +235,7 @@ const EditMenu = () => {
           </button>
         </form>
       </div>
-    </DashboardLayout>
+   
   );
 };
 

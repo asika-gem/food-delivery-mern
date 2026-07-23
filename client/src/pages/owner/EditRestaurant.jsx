@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { api } from "../../services/api";
 
-const menu = [
-  { name: "Dashboard", path: "/owner/dashboard" },
-  { name: "Restaurant", path: "/owner/restaurant" },
-  { name: "Menu", path: "/owner/menu" },
-];
 
 const EditRestaurant = () => {
   const navigate = useNavigate();
@@ -94,7 +88,6 @@ const EditRestaurant = () => {
   };
 
   return (
-    <DashboardLayout title="Edit Restaurant" menu={menu}>
       <div className="rounded-2xl bg-white p-8 shadow">
         <h1 className="mb-8 text-3xl font-bold">Edit Restaurant</h1>
 
@@ -202,7 +195,6 @@ const EditRestaurant = () => {
           </div>
         </form>
       </div>
-    </DashboardLayout>
   );
 };
 

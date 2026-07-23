@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import { User, Mail, Phone, MapPin, Camera } from "lucide-react";
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { api } from "../../services/api";
 
-const menu = [
-  { name: "Dashboard", path: "/owner/dashboard" },
-  { name: "Restaurant", path: "/owner/restaurant" },
-  { name: "Menu", path: "/owner/menu" },
-  { name: "Orders", path: "/owner/orders" },
-  { name: "Profile", path: "/owner/profile" },
-];
+
 
 const OwnerProfile = () => {
   const [profile, setProfile] = useState({
@@ -39,16 +32,16 @@ const OwnerProfile = () => {
 
   if (loading) {
     return (
-      <DashboardLayout title="Restaurant Owner" menu={menu}>
+     
         <div className="py-20 text-center text-xl font-semibold">
           Loading Profile...
         </div>
-      </DashboardLayout>
+      
     );
   }
 
   return (
-    <DashboardLayout title="Restaurant Owner" menu={menu}>
+    
       <div className="mx-auto max-w-5xl">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <div className="mb-10 flex flex-col items-center">
@@ -125,7 +118,7 @@ const OwnerProfile = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    
   );
 };
 

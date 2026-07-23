@@ -1,28 +1,41 @@
-import { Home } from "lucide-react";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
-const Sidebar = ({ title = "Dashboard", menu = [] }) => {
+const Sidebar = ({ menu = [] }) => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.log("Logout failed:", error);
+    }
+  };
+
   return (
-    <aside className="flex min-h-screen w-72 flex-col bg-white shadow-lg">
-      {/* Logo / Title */}
+    <aside className="flex h-screen w-64 flex-col border-r bg-white">
+      {/* Logo / Header */}
       <div className="border-b p-6">
-        <h2 className="text-2xl font-bold text-orange-500">{title}</h2>
+        <h1 className="text-2xl font-bold text-orange-500">Food Delivery</h1>
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6 flex flex-1 flex-col">
+      <nav className="flex-1 space-y-2 overflow-y-auto p-4">
         {menu.map((item) => {
           const Icon = item.icon;
 
           return (
             <NavLink
-              key={item.name}
+              key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `mx-4 mb-2 flex items-center gap-3 rounded-xl px-5 py-3 transition ${
+                `flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition ${
                   isActive
                     ? "bg-orange-500 text-white"
-                    : "text-gray-700 hover:bg-orange-100"
+                    : "text-gray-600 hover:bg-orange-50 hover:text-orange-500"
                 }`
               }
             >
@@ -33,15 +46,15 @@ const Sidebar = ({ title = "Dashboard", menu = [] }) => {
         })}
       </nav>
 
-      {/* Back Home */}
+      {/* Logout */}
       <div className="border-t p-4">
-        <Link
-          to="/"
-          className="flex items-center justify-center gap-2 rounded-xl border border-orange-500 px-5 py-3 text-orange-500 transition hover:bg-orange-500 hover:text-white"
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-medium text-red-500 transition hover:bg-red-50"
         >
-          <Home size={18} />
-          Back to Home
-        </Link>
+          <LogOut size={20} />
+          <span>Logout</span>
+        </button>
       </div>
     </aside>
   );
