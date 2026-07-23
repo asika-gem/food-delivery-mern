@@ -1,6 +1,7 @@
 import User from "../models/UserModel.js";
 import generateToken from "../utils/token.js";
 import { validationResult } from "express-validator";
+import Menu from "../models/MenuItem.js";
 
 // Register User
 export const registerUser = async (req, res) => {
@@ -130,16 +131,105 @@ export const getCurrentUser = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
+    const user = await User.findById(req.user.id).select("-password");
 
-    res.json({
-      success: true,
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
       user,
     });
   } catch (error) {
     res.status(500).json({
-      success: false,
       message: error.message,
+    });
+  }
+};
+
+export const getFavorites = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("favorites");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      favorites: user.favorites || [],
+    });
+  } catch (error) {
+    console.error("Get favorites error:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch favorites",
+    });
+  }
+};
+
+export const toggleFavorite = async (req, res) => {
+  try {
+    const { menuId } = req.params;
+
+    // Check if menu exists
+    const menu = await Menu.findById(menuId);
+
+    if (!menu) {
+      return res.status(404).json({
+        message: "Menu item not found",
+      });
+    }
+
+    // Find logged-in user
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Remove old null/invalid values
+    user.favorites = user.favorites.filter(
+      (id) => id !== null && id !== undefined,
+    );
+
+    // Check if already favorite
+    const favoriteIndex = user.favorites.findIndex(
+      (id) => id.toString() === menuId,
+    );
+
+    // REMOVE FAVORITE
+    if (favoriteIndex !== -1) {
+      user.favorites.splice(favoriteIndex, 1);
+
+      await user.save();
+
+      return res.status(200).json({
+        message: "Removed from favorites",
+        isFavorite: false,
+      });
+    }
+
+    // ADD FAVORITE
+    user.favorites.push(menuId);
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Added to favorites",
+      isFavorite: true,
+    });
+  } catch (error) {
+    console.error("Toggle favorite error:", error);
+
+    return res.status(500).json({
+      message: "Failed to update favorite",
+      error: error.message,
     });
   }
 };

@@ -6,111 +6,39 @@ import {
   ClipboardList,
   X,
   Utensils,
+  CalendarDays,
+  Store,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
-import customerMenu from "../../config/customerMenu";
+
 import { api } from "../../services/api";
 import ReviewCard from "../../components/customer/ReviewCard";
 
-const StarPicker = ({ value, onChange }) => (
-  <div className="flex items-center gap-2">
-    {[1, 2, 3, 4, 5].map((star) => (
-      <button
-        type="button"
-        key={star}
-        onClick={() => onChange(star)}
-        className="transition hover:scale-110"
-      >
-        <Star
-          size={32}
-          className={
-            star <= value
-              ? "fill-yellow-400 text-yellow-400"
-              : "text-gray-300"
-          }
-        />
-      </button>
-    ))}
-  </div>
-);
-
-const ReviewModal = ({ target, onClose, onSubmit, submitting }) => {
-  const [rating, setRating] = useState(target?.rating || 0);
-  const [comment, setComment] = useState(target?.comment || "");
-
-  const isEdit = Boolean(target?._id);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl"
-      >
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">
-              {isEdit ? "Edit Review" : "Rate & Review"}
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              {target?.foodName} · {target?.restaurantName || target?.restaurant?.name}
-            </p>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="mb-6 flex flex-col items-center gap-3 rounded-2xl bg-orange-50 py-6">
-          <StarPicker value={rating} onChange={setRating} />
-          <span className="text-sm font-medium text-orange-600">
-            {rating === 0
-              ? "Tap a star to rate"
-              : ["", "Poor", "Fair", "Good", "Very Good", "Excellent"][rating]}
-          </span>
-        </div>
-
-        <textarea
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Tell others what you thought about this dish..."
-          rows={4}
-          className="w-full resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none focus:border-orange-400"
-        />
-
-        <button
-          disabled={rating === 0 || submitting}
-          onClick={() => onSubmit({ rating, comment })}
-          className="mt-6 w-full rounded-xl bg-orange-500 py-3 font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {submitting ? "Submitting..." : isEdit ? "Update Review" : "Submit Review"}
-        </button>
-      </motion.div>
-    </div>
-  );
-};
-
 const Reviews = () => {
-  const [tab, setTab] = useState("pending");
   const [myReviews, setMyReviews] = useState([]);
   const [pending, setPending] = useState([]);
+
   const [loading, setLoading] = useState(true);
-  const [modalTarget, setModalTarget] = useState(null); // pending item OR existing review
   const [submitting, setSubmitting] = useState(false);
 
+  const [modalTarget, setModalTarget] = useState(null);
+
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+
+  // =========================
+  // FETCH REVIEWS
+  // =========================
   useEffect(() => {
-    fetchAll();
+    fetchReviews();
   }, []);
 
-  const fetchAll = async () => {
-    setLoading(true);
+  const fetchReviews = async () => {
     try {
+      setLoading(true);
+
       const [reviewsRes, pendingRes] = await Promise.all([
         api.get("/reviews/my"),
         api.get("/reviews/pending"),
@@ -119,20 +47,57 @@ const Reviews = () => {
       setMyReviews(reviewsRes.data.reviews || []);
       setPending(pendingRes.data.pending || []);
     } catch (error) {
-      console.log(error);
+      console.error("Failed to fetch reviews:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async ({ rating, comment }) => {
-    setSubmitting(true);
+  // =========================
+  // OPEN REVIEW MODAL
+  // =========================
+  const openReviewModal = (item) => {
+    setModalTarget(item);
+    setRating(item.rating || 0);
+    setComment(item.comment || "");
+  };
+
+  // =========================
+  // CLOSE MODAL
+  // =========================
+  const closeModal = () => {
+    setModalTarget(null);
+    setRating(0);
+    setComment("");
+  };
+
+  // =========================
+  // SUBMIT / UPDATE REVIEW
+  // =========================
+  const handleSubmit = async () => {
+    if (!rating) {
+      alert("Please select a rating.");
+      return;
+    }
+
+    if (!comment.trim()) {
+      alert("Please write a review.");
+      return;
+    }
+
     try {
+      setSubmitting(true);
+
+      // Edit existing review
       if (modalTarget._id) {
-        // Editing an existing review
-        await api.put(`/reviews/${modalTarget._id}`, { rating, comment });
-      } else {
-        // Creating a review from a pending item
+        await api.put(`/reviews/${modalTarget._id}`, {
+          rating,
+          comment,
+        });
+      }
+
+      // Create new review
+      else {
         await api.post("/reviews", {
           orderId: modalTarget.orderId,
           orderItemId: modalTarget.orderItemId,
@@ -141,214 +106,432 @@ const Reviews = () => {
         });
       }
 
-      setModalTarget(null);
-      await fetchAll();
-      if (!modalTarget._id) setTab("my");
+      closeModal();
+      await fetchReviews();
     } catch (error) {
-      alert(error.response?.data?.message || "Something went wrong.");
+      console.error(error);
+
+      alert(
+        error.response?.data?.message ||
+          "Something went wrong while submitting your review.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
+  // =========================
+  // DELETE REVIEW
+  // =========================
   const handleDelete = async (id) => {
-    const ok = window.confirm("Delete this review?");
-    if (!ok) return;
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this review?",
+    );
+
+    if (!confirmDelete) return;
 
     try {
       await api.delete(`/reviews/${id}`);
-      fetchAll();
+
+      fetchReviews();
     } catch (error) {
-      alert(error.response?.data?.message || "Something went wrong.");
+      console.error(error);
+
+      alert(
+        error.response?.data?.message ||
+          "Something went wrong while deleting the review.",
+      );
     }
   };
 
+  // =========================
+  // AVERAGE RATING
+  // =========================
+  const averageRating =
+    myReviews.length > 0
+      ? (
+          myReviews.reduce((total, review) => total + review.rating, 0) /
+          myReviews.length
+        ).toFixed(1)
+      : "—";
+
+  // =========================
+  // LOADING
+  // =========================
   if (loading) {
     return (
-      <DashboardLayout title="Customer" menu={customerMenu}>
-        <div className="pt-24 text-center text-lg font-medium text-gray-500">
-          Loading reviews...
+      
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-orange-200 border-t-orange-500" />
+
+            <p className="mt-4 font-medium text-gray-500">
+              Loading your reviews...
+            </p>
+          </div>
         </div>
-      </DashboardLayout>
+      
     );
   }
 
   return (
-    <DashboardLayout title="Customer" menu={customerMenu}>
       <div className="space-y-8">
-        {/* Header */}
+        {/* =================================
+            HEADER
+        ================================= */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 to-orange-400 p-8 text-white shadow-xl"
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 to-orange-400 p-8 text-white shadow-lg"
         >
           <div className="relative z-10">
             <div className="flex items-center gap-3">
-              <Star size={40} className="fill-white" />
-              <h1 className="text-4xl font-bold">Reviews & Ratings</h1>
+              <Star size={38} className="fill-white" />
+
+              <div>
+                <h1 className="text-3xl font-bold">Your Reviews</h1>
+
+                <p className="mt-1 text-orange-50">
+                  Share your food experience and help others discover great
+                  food.
+                </p>
+              </div>
             </div>
-            <p className="mt-3 text-orange-50">
-              Share your experience and help others pick great food 🍽️
-            </p>
           </div>
-          <Star size={160} className="absolute -right-10 -bottom-10 opacity-20" />
+
+          <Star
+            size={180}
+            className="absolute -bottom-12 -right-10 fill-white opacity-10"
+          />
         </motion.div>
 
-        {/* Stats */}
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+        {/* =================================
+            SUMMARY
+        ================================= */}
+        <div className="grid gap-5 md:grid-cols-3">
+          {/* Reviews Written */}
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
             <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-orange-100 p-3">
-                <MessageSquareText className="text-orange-500" />
+              <div className="rounded-2xl bg-orange-100 p-4">
+                <MessageSquareText size={25} className="text-orange-500" />
               </div>
-              <div>
-                <h2 className="text-3xl font-bold">{myReviews.length}</h2>
-                <p className="text-gray-500">Reviews Written</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-yellow-100 p-3">
-                <Star className="text-yellow-500" />
-              </div>
               <div>
-                <h2 className="text-3xl font-bold">
-                  {myReviews.length === 0
-                    ? "—"
-                    : (
-                        myReviews.reduce((sum, r) => sum + r.rating, 0) /
-                        myReviews.length
-                      ).toFixed(1)}
+                <p className="text-sm text-gray-500">Reviews Written</p>
+
+                <h2 className="mt-1 text-3xl font-bold text-gray-800">
+                  {myReviews.length}
                 </h2>
-                <p className="text-gray-500">Average Rating Given</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow-lg">
+          {/* Average Rating */}
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
             <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-purple-100 p-3">
-                <ClipboardList className="text-purple-500" />
+              <div className="rounded-2xl bg-yellow-100 p-4">
+                <Star size={25} className="fill-yellow-500 text-yellow-500" />
               </div>
+
               <div>
-                <h2 className="text-3xl font-bold">{pending.length}</h2>
-                <p className="text-gray-500">Pending Reviews</p>
+                <p className="text-sm text-gray-500">Average Rating</p>
+
+                <div className="mt-1 flex items-center gap-2">
+                  <h2 className="text-3xl font-bold text-gray-800">
+                    {averageRating}
+                  </h2>
+
+                  {myReviews.length > 0 && (
+                    <Star
+                      size={18}
+                      className="fill-yellow-400 text-yellow-400"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pending Reviews */}
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="rounded-2xl bg-purple-100 p-4">
+                <ClipboardList size={25} className="text-purple-500" />
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Awaiting Review</p>
+
+                <h2 className="mt-1 text-3xl font-bold text-gray-800">
+                  {pending.length}
+                </h2>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => setTab("pending")}
-            className={`rounded-full px-6 py-2 font-medium transition ${
-              tab === "pending"
-                ? "bg-orange-500 text-white"
-                : "bg-white text-gray-600 shadow hover:bg-orange-50"
-            }`}
-          >
-            Pending Reviews ({pending.length})
-          </button>
+        {/* =================================
+            PENDING REVIEWS
+        ================================= */}
+        <section>
+          <div className="mb-5">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Awaiting Your Review
+            </h2>
 
-          <button
-            onClick={() => setTab("my")}
-            className={`rounded-full px-6 py-2 font-medium transition ${
-              tab === "my"
-                ? "bg-orange-500 text-white"
-                : "bg-white text-gray-600 shadow hover:bg-orange-50"
-            }`}
-          >
-            My Reviews ({myReviews.length})
-          </button>
-        </div>
+            <p className="mt-1 text-sm text-gray-500">
+              Tell us about the food you recently ordered.
+            </p>
+          </div>
 
-        {/* Pending Reviews */}
-        {tab === "pending" &&
-          (pending.length === 0 ? (
-            <div className="rounded-3xl bg-white p-16 text-center shadow-xl">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-orange-100">
-                <Utensils size={44} className="text-orange-500" />
+          {pending.length === 0 ? (
+            <div className="rounded-3xl bg-white p-12 text-center shadow-sm">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-100">
+                <Utensils size={35} className="text-orange-500" />
               </div>
-              <h2 className="mt-8 text-2xl font-bold text-gray-700">
+
+              <h3 className="mt-6 text-xl font-bold text-gray-800">
                 You're all caught up!
-              </h2>
-              <p className="mx-auto mt-3 max-w-md text-gray-500">
-                No delivered items are waiting for a review right now.
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-gray-500">
+                You don't have any completed orders waiting for a review.
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="space-y-5">
               {pending.map((item) => (
-                <div
+                <motion.div
                   key={item.orderItemId}
-                  className="flex flex-col justify-between rounded-3xl bg-white p-6 shadow-lg"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md"
                 >
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-800">
-                      {item.foodName}
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {item.restaurantName}
-                    </p>
-                    <p className="mt-2 text-xs text-gray-400">
-                      Ordered on {new Date(item.orderDate).toLocaleDateString()}
-                    </p>
+                  {/* Order Header */}
+                  <div className="flex flex-col justify-between gap-4 border-b border-gray-100 pb-5 sm:flex-row">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Store size={20} className="text-orange-500" />
+
+                        <h3 className="text-lg font-bold text-gray-800">
+                          {item.restaurantName}
+                        </h3>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <CalendarDays size={15} />
+
+                          {new Date(item.orderDate).toLocaleDateString()}
+                        </span>
+
+                        {item.orderId && (
+                          <span>Order #{String(item.orderId).slice(-6)}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <span className="h-fit rounded-full bg-green-50 px-4 py-1.5 text-sm font-medium text-green-600">
+                      Delivered
+                    </span>
                   </div>
 
-                  <button
-                    onClick={() => setModalTarget(item)}
-                    className="mt-5 w-full rounded-xl bg-orange-500 py-2.5 font-semibold text-white transition hover:bg-orange-600"
-                  >
-                    Rate & Review
-                  </button>
+                  {/* Food Item */}
+                  <div className="mt-5 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50">
+                        <Utensils size={25} className="text-orange-500" />
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-800">
+                          {item.foodName}
+                        </h4>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                          How was your experience with this food?
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => openReviewModal(item)}
+                      className="rounded-xl bg-orange-500 px-5 py-2.5 font-semibold text-white transition hover:bg-orange-600"
+                    >
+                      Rate & Review
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* =================================
+            MY REVIEWS
+        ================================= */}
+        <section>
+          <div className="mb-5">
+            <h2 className="text-2xl font-bold text-gray-800">My Reviews</h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Reviews and ratings you've shared with the community.
+            </p>
+          </div>
+
+          {myReviews.length === 0 ? (
+            <div className="rounded-3xl bg-white p-12 text-center shadow-sm">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-yellow-100">
+                <Star size={35} className="text-yellow-500" />
+              </div>
+
+              <h3 className="mt-6 text-xl font-bold text-gray-800">
+                No reviews yet
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-gray-500">
+                Once you review your completed orders, they'll appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {myReviews.map((review) => (
+                <div key={review._id} className="relative">
+                  {/* Existing ReviewCard */}
+                  <ReviewCard
+                    review={review}
+                    onEdit={() => openReviewModal(review)}
+                    onDelete={() => handleDelete(review._id)}
+                  />
                 </div>
               ))}
             </div>
-          ))}
+          )}
+        </section>
+      </div>)
 
-        {/* My Reviews */}
-        {tab === "my" &&
-          (myReviews.length === 0 ? (
-            <div className="rounded-3xl bg-white p-16 text-center shadow-xl">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-orange-100">
-                <Star size={44} className="text-orange-500" />
-              </div>
-              <h2 className="mt-8 text-2xl font-bold text-gray-700">
-                No Reviews Yet
-              </h2>
-              <p className="mx-auto mt-3 max-w-md text-gray-500">
-                Reviews you write will show up here.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {myReviews.map((review) => (
-                <ReviewCard
-                  key={review._id}
-                  review={review}
-                  onEdit={setModalTarget}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          ))}
-      </div>
-
+      {/* =================================
+          REVIEW MODAL
+      ================================= */}
       <AnimatePresence>
         {modalTarget && (
-          <ReviewModal
-            target={modalTarget}
-            submitting={submitting}
-            onClose={() => setModalTarget(null)}
-            onSubmit={handleSubmit}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-lg rounded-3xl bg-white p-7 shadow-2xl"
+            >
+              {/* Modal Header */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    {modalTarget._id
+                      ? "Edit Your Review"
+                      : "Rate Your Experience"}
+                  </h2>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    {modalTarget.foodName} ·{" "}
+                    {modalTarget.restaurantName || modalTarget.restaurant?.name}
+                  </p>
+                </div>
+
+                <button
+                  onClick={closeModal}
+                  className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Rating */}
+              <div className="mt-7 rounded-2xl bg-orange-50 p-6 text-center">
+                <p className="mb-4 font-medium text-gray-700">
+                  How would you rate your experience?
+                </p>
+
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className="transition hover:scale-110"
+                    >
+                      <Star
+                        size={38}
+                        className={
+                          star <= rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                <p className="mt-3 text-sm font-medium text-orange-600">
+                  {rating === 0
+                    ? "Select your rating"
+                    : rating === 1
+                      ? "Poor"
+                      : rating === 2
+                        ? "Fair"
+                        : rating === 3
+                          ? "Good"
+                          : rating === 4
+                            ? "Very Good"
+                            : "Excellent"}
+                </p>
+              </div>
+
+              {/* Review */}
+              <div className="mt-6">
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Your Review
+                </label>
+
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={5}
+                  placeholder="Tell others about your food and delivery experience..."
+                  className="w-full resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={closeModal}
+                  className="flex-1 rounded-xl border border-gray-200 py-3 font-semibold text-gray-600 transition hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  disabled={submitting || rating === 0}
+                  onClick={handleSubmit}
+                  className="flex-1 rounded-xl bg-orange-500 py-3 font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {submitting
+                    ? "Saving..."
+                    : modalTarget._id
+                      ? "Update Review"
+                      : "Submit Review"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
-    </DashboardLayout>
-  );
+  
 };
 
 export default Reviews;

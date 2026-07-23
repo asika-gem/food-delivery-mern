@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser,loginUser, getCurrentUser, getProfile } from "../controllers/authController.js";
+import { registerUser,loginUser, getCurrentUser, getProfile, toggleFavorite, getFavorites } from "../controllers/authController.js";
 import { registerValidation,loginValidation } from "../middleware/authValidator.js";
 import {protect} from "../middleware/authMiddleware.js";
 
@@ -9,4 +9,6 @@ router.post("/register", registerValidation, registerUser);
 router.post("/login", loginValidation, loginUser);
 router.get("/me", protect, getCurrentUser);
 router.get("/profile", protect, getProfile);
+router.put("/favorite/:menuId", protect, toggleFavorite);
+router.get("/favorites", protect, getFavorites);
 export default router;

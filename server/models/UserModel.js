@@ -56,6 +56,12 @@ const userSchema = new mongoose.Schema(
       ref: "Order",
       default: null,
     },
+    favorites: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Menu",
+      },
+    ],
   },
   {
     timestamps: true,

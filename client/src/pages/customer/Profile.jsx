@@ -21,7 +21,7 @@ const CustomerProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const res = await api.get("/users/profile");
+      const res = await api.get("/auth/profile");
 
       setUser(res.data.user);
 
@@ -46,7 +46,7 @@ const CustomerProfile = () => {
 
   const updateProfile = async () => {
     try {
-      await api.put("/users/profile", form);
+      await api.put("/auth/profile", form);
 
       alert("Profile updated");
     } catch (err) {

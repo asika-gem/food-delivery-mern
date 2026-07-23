@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   ShoppingBag,
@@ -7,17 +8,14 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { api } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import customerMenu from "../../config/customerMenu";
-
-const menu = customerMenu;
 
 const CustomerDashboard = () => {
   const { currentUser } = useAuth();
- const  navigate = useNavigate();
+  const navigate = useNavigate();
+
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
@@ -27,14 +25,21 @@ const CustomerDashboard = () => {
   const fetchOrders = async () => {
     try {
       const res = await api.get("/orders/my");
+
       setOrders(res.data.orders || []);
     } catch (error) {
-      console.log(error);
+      console.log("Failed to fetch orders:", error);
     }
   };
 
+  // =========================
+  // ORDER STATISTICS
+  // =========================
+
   const pendingOrders = orders.filter(
-    (order) => order.status !== "delivered" && order.status !== "cancelled",
+    (order) =>
+      order.status !== "delivered" &&
+      order.status !== "cancelled",
   ).length;
 
   const deliveredOrders = orders.filter(
@@ -42,11 +47,15 @@ const CustomerDashboard = () => {
   ).length;
 
   const progress =
-    orders.length === 0 ? 0 : (deliveredOrders / orders.length) * 100;
+    orders.length === 0
+      ? 0
+      : (deliveredOrders / orders.length) * 100;
 
   return (
-    <DashboardLayout title="Customer" menu={menu}>
-      {/* Hero Section */}
+    <>
+      {/* =========================
+          HERO SECTION
+      ========================= */}
 
       <div className="mb-8 rounded-3xl border-l-8 border-orange-500 bg-white p-8 shadow-xl">
         <h1 className="text-4xl font-bold text-gray-800">
@@ -58,79 +67,117 @@ const CustomerDashboard = () => {
         </p>
       </div>
 
-      {/* Statistics */}
+      {/* =========================
+          STATISTICS
+      ========================= */}
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+
         {/* Total Orders */}
 
         <div className="group rounded-3xl bg-white p-6 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
           <div className="flex items-center justify-between">
-            <ShoppingBag className="text-orange-500" size={42} />
+            <ShoppingBag
+              className="text-orange-500"
+              size={42}
+            />
 
             <span className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-600">
               Orders
             </span>
           </div>
 
-          <h2 className="mt-6 text-4xl font-bold">{orders.length}</h2>
+          <h2 className="mt-6 text-4xl font-bold">
+            {orders.length}
+          </h2>
 
-          <p className="mt-2 text-gray-500">Total Orders</p>
+          <p className="mt-2 text-gray-500">
+            Total Orders
+          </p>
         </div>
 
-        {/* Pending */}
+        {/* Pending Orders */}
 
         <div className="group rounded-3xl bg-white p-6 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
           <div className="flex items-center justify-between">
-            <Clock3 className="text-yellow-500" size={42} />
+            <Clock3
+              className="text-yellow-500"
+              size={42}
+            />
 
             <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-600">
               Active
             </span>
           </div>
 
-          <h2 className="mt-6 text-4xl font-bold">{pendingOrders}</h2>
+          <h2 className="mt-6 text-4xl font-bold">
+            {pendingOrders}
+          </h2>
 
-          <p className="mt-2 text-gray-500">Pending Orders</p>
+          <p className="mt-2 text-gray-500">
+            Pending Orders
+          </p>
         </div>
 
-        {/* Delivered */}
+        {/* Delivered Orders */}
 
         <div className="group rounded-3xl bg-white p-6 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
           <div className="flex items-center justify-between">
-            <CheckCircle className="text-green-500" size={42} />
+            <CheckCircle
+              className="text-green-500"
+              size={42}
+            />
 
             <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-600">
               Delivered
             </span>
           </div>
 
-          <h2 className="mt-6 text-4xl font-bold">{deliveredOrders}</h2>
+          <h2 className="mt-6 text-4xl font-bold">
+            {deliveredOrders}
+          </h2>
 
-          <p className="mt-2 text-gray-500">Successfully Delivered</p>
+          <p className="mt-2 text-gray-500">
+            Successfully Delivered
+          </p>
         </div>
 
         {/* Profile */}
 
-        <div className="group rounded-3xl bg-white p-6 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+        <div
+          onClick={() => navigate("/customer/profile")}
+          className="group cursor-pointer rounded-3xl bg-white p-6 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+        >
           <div className="flex items-center justify-between">
-            <User className="text-blue-500" size={42} />
+            <User
+              className="text-blue-500"
+              size={42}
+            />
 
             <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-600">
               Profile
             </span>
           </div>
 
-          <h2 className="mt-6 text-2xl font-bold">{currentUser?.name}</h2>
+          <h2 className="mt-6 text-2xl font-bold">
+            {currentUser?.name}
+          </h2>
 
-          <p className="mt-2 text-gray-500">Customer Account</p>
+          <p className="mt-2 text-gray-500">
+            Customer Account
+          </p>
         </div>
       </div>
 
-      {/* Order Progress */}
+      {/* =========================
+          ORDER PROGRESS
+      ========================= */}
 
       <div className="mt-8 rounded-3xl bg-white p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">Delivery Progress</h2>
+          <h2 className="text-xl font-bold">
+            Delivery Progress
+          </h2>
 
           <span className="font-semibold text-green-600">
             {Math.round(progress)}%
@@ -150,28 +197,42 @@ const CustomerDashboard = () => {
           {deliveredOrders} of {orders.length} orders completed.
         </p>
       </div>
-      {/* Recent Orders */}
+
+      {/* =========================
+          RECENT ORDERS
+      ========================= */}
 
       <div className="mt-10 rounded-3xl bg-white p-8 shadow-xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Recent Orders</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Recent Orders
+            </h2>
 
-            <p className="text-gray-500">Your latest food orders</p>
+            <p className="text-gray-500">
+              Your latest food orders
+            </p>
           </div>
 
           <button
-            onClick={() => navigate("/orders")}
+            type="button"
+            onClick={() => navigate("/customer/orders")}
             className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2 font-medium text-white transition hover:bg-orange-600"
           >
             View All
+
             <ArrowRight size={18} />
           </button>
         </div>
 
+        {/* No Orders */}
+
         {orders.length === 0 ? (
           <div className="flex flex-col items-center py-20">
-            <ShoppingBag size={70} className="text-gray-300" />
+            <ShoppingBag
+              size={70}
+              className="text-gray-300"
+            />
 
             <h2 className="mt-6 text-2xl font-bold text-gray-700">
               No Orders Yet
@@ -184,6 +245,9 @@ const CustomerDashboard = () => {
             </p>
           </div>
         ) : (
+
+          /* Recent Orders List */
+
           <div className="space-y-5">
             {orders.slice(0, 5).map((order) => (
               <div
@@ -194,11 +258,16 @@ const CustomerDashboard = () => {
 
                 <div>
                   <h3 className="text-xl font-bold text-gray-800">
-                    {order.restaurant?.name}
+                    {order.restaurant?.name ||
+                      "Restaurant"}
                   </h3>
 
                   <p className="mt-1 text-sm text-gray-400">
-                    {new Date(order.createdAt).toLocaleDateString()}
+                    {order.createdAt
+                      ? new Date(
+                          order.createdAt,
+                        ).toLocaleDateString()
+                      : ""}
                   </p>
                 </div>
 
@@ -206,16 +275,13 @@ const CustomerDashboard = () => {
 
                 <div>
                   <span
-                    className={`rounded-full px-5 py-2 text-sm font-semibold
-
-                      ${
-                        order.status === "delivered"
-                          ? "bg-green-100 text-green-700"
-                          : order.status === "cancelled"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
-                      }
-                    `}
+                    className={`rounded-full px-5 py-2 text-sm font-semibold ${
+                      order.status === "delivered"
+                        ? "bg-green-100 text-green-700"
+                        : order.status === "cancelled"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-yellow-100 text-yellow-700"
+                    }`}
                   >
                     {order.status}
                   </span>
@@ -224,7 +290,9 @@ const CustomerDashboard = () => {
                 {/* Price */}
 
                 <div className="text-right">
-                  <p className="text-sm text-gray-400">Total Amount</p>
+                  <p className="text-sm text-gray-400">
+                    Total Amount
+                  </p>
 
                   <h2 className="text-2xl font-bold text-orange-600">
                     Rs. {order.totalAmount}
@@ -235,7 +303,7 @@ const CustomerDashboard = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 
